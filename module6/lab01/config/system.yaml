@@ -1,0 +1,6 @@
+backend_servers:
+  - http://localhost:8082
+  - http://localhost:8084
+rate_limit: 10
+logging_enabled: true
+port: 8080

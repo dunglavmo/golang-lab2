@@ -1,0 +1,66 @@
+package loadbalancer
+
+import (
+	"fmt"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+
+	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
+)
+
+var currentBackendIndex int
+var limiter *rate.Limiter
+
+func loadBalancerHandler(w http.ResponseWriter, r *http.Request) {
+	// Check rate limit for the incoming request's IP address
+	if limiter.Allow() == false {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	// Round Robin to select the next backend server
+	backendURL, err := url.Parse(backendServers[currentBackendIndex])
+	if err != nil {
+		http.Error(w, "Error parsing backend URL", http.StatusInternalServerError)
+		return
+	}
+
+	currentBackendIndex = (currentBackendIndex + 1) % len(backendServers)
+
+	// Log the request if logging is enabled
+	if loggingEnabled {
+		LogRequest(r)
+	}
+
+	// Proxy the request to the selected backend server
+	proxy := httputil.NewSingleHostReverseProxy(backendURL)
+	proxy.ServeHTTP(w, r)
+
+	// Log the response if logging is enabled
+	if loggingEnabled {
+		LogResponse(r)
+	}
+}
+
+func Start() error {
+	err := initConfig()
+	if err != nil {
+		return err
+	}
+
+	// Create rate limiter with the specified rate limit
+	limiter = rate.NewLimiter(rate.Limit(rateLimit), 1)
+
+	// Start the load balancer
+	port := viper.GetInt("port")
+	fmt.Printf("Load Balancer listening on port %d...\n", port)
+	http.HandleFunc("/", loadBalancerHandler)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

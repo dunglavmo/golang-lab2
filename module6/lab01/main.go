@@ -7,6 +7,7 @@ import (
 
 	"loadbalancer/loadbalancer"
 	"loadbalancer/middleware"
+	"loadbalancer/repositories"
 )
 
 func main() {
@@ -15,7 +16,12 @@ func main() {
 		log.Fatal("Error reading system.conf:", err)
 	}
 
-	lb := loadbalancer.NewLoadBalancer(config)
+	repo, err := repositories.NewRedisRepository("localhost:6379") // Replace with your Redis server address
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+
+	lb := loadbalancer.NewLoadBalancer(config, repo)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", lb.Handler)

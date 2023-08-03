@@ -33,7 +33,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"time"
+
+	"loadbalancer/repositories"
 
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
@@ -41,13 +42,14 @@ import (
 
 type Config struct {
 	BackendServers []string
-	RateLimit      float64
+	RateLimit      int
 	LoggingEnabled bool
 	Port           int
 }
 type LoadBalancer struct {
 	Config  *Config
 	Limiter *rate.Limiter
+	repo    *repositories.RedisRepository
 }
 
 func ReadConfig() (*Config, error) {
@@ -59,23 +61,30 @@ func ReadConfig() (*Config, error) {
 
 	config := &Config{
 		BackendServers: viper.GetStringSlice("backend_servers"),
-		RateLimit:      viper.GetFloat64("rate_limit"),
+		RateLimit:      viper.GetInt("rate_limit"),
 		LoggingEnabled: viper.GetBool("logging_enabled"),
 		Port:           viper.GetInt("port"),
 	}
 
 	return config, nil
 }
-func NewLoadBalancer(config *Config) *LoadBalancer {
+func NewLoadBalancer(config *Config, repo *repositories.RedisRepository) *LoadBalancer {
 	return &LoadBalancer{
 		Config:  config,
 		Limiter: rate.NewLimiter(rate.Limit(config.RateLimit), 1),
+		repo:    repo,
 	}
 }
 
 func (lb *LoadBalancer) Handler(w http.ResponseWriter, r *http.Request) {
 	// Check rate limit for the incoming request's IP address
-	if lb.Limiter.AllowN(time.Now(), 1) == false {
+	// if lb.Limiter.AllowN(time.Now(), 1) == false {
+	// 	http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+	// 	return
+	// }
+
+	ip := r.RemoteAddr
+	if lb.repo.IsRateLimited(ip, lb.Config.RateLimit) {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		return
 	}
@@ -91,7 +100,8 @@ func (lb *LoadBalancer) Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Log the request if logging is enabled
 	if lb.Config.LoggingEnabled {
-		log.Printf("Load Balancer: Received request from %s for URL: %s\n", r.RemoteAddr, r.URL.Host)
+		log.Printf("Load Balancer: Received request from %s for URL: %s\n", ip, r.URL.Host)
+		log.Println(r.RemoteAddr)
 	}
 
 	// Proxy the request to the selected backend server
@@ -100,6 +110,6 @@ func (lb *LoadBalancer) Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Log the response if logging is enabled
 	if lb.Config.LoggingEnabled {
-		log.Printf("Load Balancer: Responded to %s for URL: %s\n", r.RemoteAddr, r.URL)
+		log.Printf("Load Balancer: Responded to %s for URL: %s\n", ip, r.URL)
 	}
 }

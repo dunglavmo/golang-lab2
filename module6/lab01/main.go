@@ -16,7 +16,7 @@ func main() {
 		log.Fatal("Error reading system.conf:", err)
 	}
 
-	repo, err := repositories.NewRedisRepository("localhost:6379") // Replace with your Redis server address
+	repo, err := repositories.NewRedisRepository("localhost:6379")
 	if err != nil {
 		log.Fatalf("Failed to connect to Redis: %v", err)
 	}
@@ -26,7 +26,6 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", lb.Handler)
 
-	// Add logger middleware if logging is enabled
 	if config.LoggingEnabled {
 		muxWithLogger := middleware.Logger(mux)
 		http.Handle("/", muxWithLogger)

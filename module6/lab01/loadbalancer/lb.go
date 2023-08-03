@@ -1,31 +1,3 @@
-// package loadbalancer
-
-// import (
-// 	"github.com/spf13/viper"
-// )
-
-// var backendServers []string
-// var rateLimit int
-// var loggingEnabled bool
-
-// func initConfig() error {
-// 	viper.SetConfigFile("config/system.conf")
-// 	if err := viper.ReadInConfig(); err != nil {
-// 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-// 			// Config file not found; ignore error if desired
-// 		} else {
-// 			// Config file was found but another error was produced
-// 		}
-// 	}
-
-// 	backendServers = viper.GetStringSlice("backend_servers")
-// 	rateLimit = viper.GetInt("rate_limit")
-// 	loggingEnabled = viper.GetBool("logging_enabled")
-
-//		return nil
-//	}
-//
-// loadbalancer/config.go
 package loadbalancer
 
 import (
@@ -77,11 +49,6 @@ func NewLoadBalancer(config *Config, repo *repositories.RedisRepository) *LoadBa
 }
 
 func (lb *LoadBalancer) Handler(w http.ResponseWriter, r *http.Request) {
-	// Check rate limit for the incoming request's IP address
-	// if lb.Limiter.AllowN(time.Now(), 1) == false {
-	// 	http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-	// 	return
-	// }
 
 	ip := r.RemoteAddr
 	if lb.repo.IsRateLimited(ip, lb.Config.RateLimit) {

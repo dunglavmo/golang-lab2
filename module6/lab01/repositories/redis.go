@@ -39,7 +39,7 @@ func (r *RedisRepository) IsRateLimited(ip string, limit int) bool {
 	}
 
 	// Set the TTL to 30 seconds if the key is newly created
-	if currentCount == int64(1) {
+	if currentCount == 1 {
 		_, err := r.client.Expire(ctx, key, 30*time.Second).Result()
 		if err != nil {
 			log.Printf("Error setting Redis key expiration: %v", err)

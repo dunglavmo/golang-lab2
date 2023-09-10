@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"crypto/tls"
 	"html/template"
 	"log"
@@ -12,12 +11,11 @@ import (
 	"social_app/config"
 	"social_app/models"
 
-	"github.com/k3a/html2text"
-	"gopkg.in/gomail.v2"
+	gomail "gopkg.in/gomail.v2"
 )
 
 type EmailData struct {
-	URL       string
+	Text      string
 	FirstName string
 	Subject   string
 }
@@ -54,22 +52,22 @@ func SendEmail(user *models.User, data *EmailData) {
 	smtpHost := os.Getenv("SMTP_HOST")
 	smtpPort, _ := strconv.Atoi(os.Getenv("SMTP_PORT"))
 
-	var body bytes.Buffer
+	// var body bytes.Buffer
 
-	template, err := ParseTemplateDir("templates")
-	if err != nil {
-		log.Fatal("Could not parse template", err)
-	}
+	// template, err := ParseTemplateDir("templates")
+	// if err != nil {
+	// 	log.Fatal("Could not parse template", err)
+	// }
 
-	template.ExecuteTemplate(&body, "verificationCode.html", &data)
+	// template.ExecuteTemplate(&body, "verificationCode.html", &data)
 
 	m := gomail.NewMessage()
 
 	m.SetHeader("From", from)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", data.Subject)
-	m.SetBody("text/html", body.String())
-	m.AddAlternative("text/plain", html2text.HTML2Text(body.String()))
+	m.SetBody("text/plain", data.Text)
+	// m.AddAlternative("text/plain", html2text.HTML2Text(body.String()))
 
 	d := gomail.NewDialer(smtpHost, smtpPort, smtpUser, smtpPass)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}

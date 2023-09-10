@@ -11,7 +11,7 @@ type User struct {
 	Name             string    `gorm:"type:varchar(255);not null"`
 	Email            string    `gorm:"uniqueIndex;not null"`
 	Password         string    `gorm:"not null"`
-	UserName         string    `gorm:"uniqueIndex;not null"`
+	UserName         string    `gorm:"type:varchar(255);not null"`
 	VerificationCode string
 	Verified         bool      `gorm:"not null"`
 	CreatedAt        time.Time `gorm:"not null"`
@@ -27,7 +27,7 @@ type SignUpInput struct {
 }
 
 type SignInInput struct {
-	UserName string `json:"username"  binding:"required"`
+	Email    string `json:"email"  binding:"required"`
 	Password string `json:"password"  binding:"required"`
 }
 

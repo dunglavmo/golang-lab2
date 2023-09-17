@@ -53,6 +53,12 @@ var (
 
 	UserController      controllers.UserController
 	UserRouteController routes.UserRouteController
+
+	AlbumController      controllers.AlbumController
+	AlbumRouteController routes.AlbumRouteController
+
+	PhotoController      controllers.PhotoController
+	PhotoRouteController routes.PhotoRouteController
 )
 
 func init() {
@@ -65,6 +71,12 @@ func init() {
 
 	UserController = controllers.NewUserController(config.DB)
 	UserRouteController = routes.NewRouteUserController(UserController)
+
+	AlbumController = controllers.NewAlbumController(config.DB)
+	AlbumRouteController = routes.NewRouteAlbumController(AlbumController)
+
+	PhotoController = controllers.NewPhotoController(config.DB)
+	PhotoRouteController = routes.NewRoutePhotoController(PhotoController)
 
 	server = gin.Default()
 }
@@ -86,5 +98,7 @@ func main() {
 
 	AuthRouteController.AuthRoute(router)
 	UserRouteController.UserRoute(router)
+	AlbumRouteController.AlbumRoute(router)
+	PhotoRouteController.PhotoRoute(router)
 	log.Fatal(server.Run(":" + os.Getenv("PORT")))
 }

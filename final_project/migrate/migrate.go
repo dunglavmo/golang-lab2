@@ -13,6 +13,6 @@ func init() {
 }
 
 func main() {
-	config.DB.AutoMigrate(&models.User{})
+	config.DB.AutoMigrate(&models.User{}, &models.Album{})
 	fmt.Println("? Migration complete")
 }
